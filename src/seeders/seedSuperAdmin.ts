@@ -1,3 +1,5 @@
+import ConnectDB from "../config/config"
+import { IRole, Role } from "../models/Role.model"
 import { IUser, User } from "../models/User.model"
 
 const superAdminDetails : {firstName : string, lastName : string, email : string, password : string, role : string} = {
@@ -9,7 +11,13 @@ const superAdminDetails : {firstName : string, lastName : string, email : string
 }
 
 const seedSuperAdmin = async(superAdminDetails :  {firstName : string, lastName : string, email : string, password : string, role : string} ) => {
-    const superAdmin : IUser  = await User.create(superAdminDetails)
+    ConnectDB()
+    const role = await Role.findOne({name : superAdminDetails.role}) 
+    const details = {
+        ...superAdminDetails,
+        role : role?._id
+    }
+    const superAdmin : IUser  = await User.create(details)
     console.log("Super Admin created", superAdmin)
 }
 

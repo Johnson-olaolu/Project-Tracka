@@ -1,6 +1,7 @@
+import ConnectDB from "../config/config"
 import { Permission } from "../models/Permission.model"
 
-const permissionsToSeed = [
+const permissionsToSeed :{ name: string, description: string  }[] = [
     { 
         name: "project:create", 
         description: "create a project and upload relevent documents" 
@@ -24,19 +25,25 @@ const permissionsToSeed = [
     {
         name : "project:approve",
         description : "approve project"
+    }, 
+    {
+        name : "project:reject",
+        description : "reject project"
     }
 ]
 
-const seedPermissions = async (permissions: { name: string, description: string  }[]) => {
+const seedPermissions  = async (permissions: { name: string, description: string  }[]) => {
+    ConnectDB()
     for (const permission of permissions) {
         const existingPermission = await Permission.findOne({ name: permission.name })
         if (existingPermission) {
-            return
+            existingPermission.update(permission)
         } else {
             const newPermission = await Permission.create(permission)
             console.log("created new Permission", newPermission)
         }
     }
+    return;
 }
 
 seedPermissions(permissionsToSeed)

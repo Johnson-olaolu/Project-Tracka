@@ -1,38 +1,48 @@
 import { IRole, Role } from "../models/Role.model"
 import dotenv from "dotenv"
-import mongoose from "mongoose"
+import mongoose, {Types} from "mongoose"
+import ConnectDB from "../config/config";
+import { Permission } from "../models/Permission.model";
 
 dotenv.config()
 
-const ConnectDB = async () => {
-    // const conn = await mongoose.connect(process.env.MONGO_DB_URI || "")
-    // if (conn) {
-    //     console.log(`MongoDB Connected: ${conn.connection.host}`)
-    // } else {
-    //     console.log("Error connecting to db")
-    // }
-    console.log(process.env.MONGO_DB_URI)
-}
-
-ConnectDB();
 
 
-const rolesToSeed : {name : string, permissions : [] }[] = [
+
+const rolesToSeed : {name : string, permissions : string[] }[] = [
     {
         name : "superAdmin",
-        permissions : []
+        permissions : [
+            "project:create",
+            "project:update",
+            "project:delete",
+            "project:pre-approve",
+            "project:pre-reject",
+            "project:approve",
+            "project:delete"
+        ]
     },
     {
         name : "stateCoordinator",
-        permissions : []
+        permissions : [
+            "project:create",
+            "project:update",
+            "project:delete",
+        ]
     }, 
     {
         name : "projectManager",
-        permissions : []
+        permissions : [
+            "project:pre-approve",
+            "project:pre-reject",
+        ]
     },
     {
         name : "projectOwner",
-        permissions : []
+        permissions : [
+            "project:approve",
+            "project:delete"
+        ]
     },
     {
         name : "financeManager",
@@ -40,12 +50,17 @@ const rolesToSeed : {name : string, permissions : [] }[] = [
     }
 ]
 
-const seedRoles = async (roles : {name : string, permissions : [] }[])  => {
-    
+const seedRoles = async (roles : {name : string, permissions : string[] }[])  => {
+    ConnectDB();
     for (const role  of roles) {
         const existingRole = await Role.findOne({name : role.name}).exec()
         if (existingRole) {
-            existingRole.update({permissions : role.permissions})
+            const permissions_id  : Types.ObjectId[]= []
+            for (const permission of role.permissions) {
+                const selectedPermission = await Permission.findOne({name : permission})
+                permissions_id.push(selectedPermission?._id)
+            }
+            await existingRole.update({permissions : permissions_id}, {new: true})
             console.log("updated Role:", existingRole)
         }else {
             const newRole : IRole = await Role.create(role)
